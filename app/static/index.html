@@ -1,128 +1,165 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NiveshSetu AI | IDBI Innovate 2026</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NiveshSetu AI — IDBI Innovate Banking PoC</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <div class="orb orb-a"></div>
-  <div class="orb orb-b"></div>
-
-  <header class="hero">
-    <nav>
-      <div class="brand"><span>◆</span> NiveshSetu AI</div>
-      <div class="nav-actions">
-        <button onclick="runFullDemo()">Run Judge Demo</button>
-        <button class="ghost" onclick="toggleKillSwitch(false)">Pause AI</button>
-        <button class="ghost" onclick="toggleKillSwitch(true)">Enable AI</button>
-      </div>
-    </nav>
-    <section class="hero-grid">
+  <div class="bg-grid"></div>
+  <nav>
+    <div class="brand">
+      <div class="logo">NS</div>
       <div>
-        <p class="eyebrow">IDBI Innovate 2026 • Wealth Advisory + Conversational AI + Mobile Banking</p>
-        <h1>Bank-grade explainable AI wealth advisory inside mobile banking.</h1>
-        <p class="subtitle">Personalized goal planning, suitability scoring, portfolio recommendation, anomaly detection, human-review routing, and immutable audit logs — built for real PoC conversations with a bank.</p>
-        <div class="cta-row">
-          <button onclick="runFullDemo()">Generate Live Recommendation</button>
-          <button class="secondary" onclick="loadAudit()">View Audit Trail</button>
-        </div>
+        <strong>NiveshSetu AI</strong>
+        <span>IDBI Innovate 2026 • Bank-grade PoC</span>
       </div>
-      <aside class="hero-card glass">
-        <div class="score-ring" id="scoreRing">--</div>
-        <h3 id="riskBucket">Awaiting risk profile</h3>
-        <p id="modelStatus">Model state loading...</p>
-        <div class="mini-grid">
-          <span>Explainability</span><b>100%</b>
-          <span>Human Review</span><b>ON</b>
-          <span>Sandbox-ready</span><b>YES</b>
-        </div>
-      </aside>
-    </section>
-  </header>
+    </div>
+    <div class="nav-actions">
+      <a href="/docs" target="_blank">API Docs</a>
+      <button id="demoBtn" onclick="runJudgeDemo()">Run Judge Demo</button>
+      <button id="streamBtn" onclick="startLiveStream()">Start Real-time</button>
+    </div>
+  </nav>
 
   <main>
-    <section class="kpi-grid" id="kpis"></section>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Explainable wealth advisory + mobile banking intelligence</p>
+        <h1>Banking AI that can be trusted, audited, paused, and approved.</h1>
+        <p class="subtitle">
+          A full-stack FastAPI prototype for risk profiling, goal planning, anomaly detection, adviser copilot,
+          consent, human review, real-time progress, model governance, and SHA-256 audit-chain verification.
+        </p>
+        <div class="hero-actions">
+          <button onclick="generateRisk()">Generate Risk Profile</button>
+          <button class="secondary" onclick="generatePortfolio()">Recommend Portfolio</button>
+          <button class="ghost" onclick="toggleKillSwitch(false)">Pause AI</button>
+          <button class="ghost" onclick="toggleKillSwitch(true)">Enable AI</button>
+        </div>
+      </div>
+      <div class="hero-card glass">
+        <div class="status-row">
+          <span>Model Governance</span>
+          <b id="modelStatus">Loading…</b>
+        </div>
+        <div class="score-orbit">
+          <div class="score-ring" id="scoreRing">--</div>
+          <div>
+            <h3 id="riskBucket">Suitability pending</h3>
+            <p>Transparent score with reasons, guardrails, and human-review routing.</p>
+          </div>
+        </div>
+        <div id="progressRail" class="progress-rail"><span style="width: 12%"></span></div>
+        <p id="progressText" class="tiny">Ready for judge demo.</p>
+      </div>
+    </section>
+
+    <section id="kpis" class="kpi-grid"></section>
+
+    <section class="panel-grid">
+      <div class="panel glass span-2">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Customer 360</p>
+            <h2>Consent-gated financial intelligence</h2>
+          </div>
+          <button class="small" onclick="loadCustomer360()">Refresh</button>
+        </div>
+        <div id="customer360" class="output"></div>
+      </div>
+      <div class="panel glass">
+        <p class="eyebrow">Live Stream</p>
+        <h2>Real-time signals</h2>
+        <div id="liveFeed" class="live-feed"><p class="tiny">Press Start Real-time.</p></div>
+      </div>
+    </section>
 
     <section class="panel-grid">
       <div class="panel glass">
-        <div class="section-title">
-          <div>
-            <p class="eyebrow">Step 1</p>
-            <h2>Customer Suitability Profile</h2>
-          </div>
-          <button onclick="generateRisk()">Run</button>
-        </div>
+        <p class="eyebrow">1. Risk Engine</p>
+        <h2>Suitability profile</h2>
         <form id="riskForm" class="form-grid">
-          <label>Age <input name="age" type="number" value="24" /></label>
-          <label>Monthly Income ₹ <input name="monthly_income" type="number" value="85000" /></label>
-          <label>Monthly Expenses ₹ <input name="monthly_expenses" type="number" value="42000" /></label>
+          <label>Age <input name="age" type="number" value="31" /></label>
+          <label>Monthly income <input name="monthly_income" type="number" value="92000" /></label>
+          <label>Monthly expenses <input name="monthly_expenses" type="number" value="41000" /></label>
           <label>Dependents <input name="dependents" type="number" value="1" /></label>
-          <label>Goal Horizon Years <input name="horizon_years" type="number" value="8" /></label>
-          <label>Emergency Fund Months <input name="emergency_months" type="number" value="5" /></label>
-          <label>Volatility Comfort 1-5 <input name="volatility_comfort" type="number" value="4" /></label>
-          <label>Debt / Income <input name="debt_to_income" type="number" step="0.01" value="0.18" /></label>
+          <label>Horizon years <input name="horizon_years" type="number" value="8" /></label>
+          <label>Emergency months <input name="emergency_months" type="number" value="5" /></label>
+          <label>Volatility comfort 1-5 <input name="volatility_comfort" type="number" value="4" /></label>
+          <label>Debt-to-income <input name="debt_to_income" type="number" step="0.01" value="0.18" /></label>
+          <label>Market experience 0-5 <input name="prior_market_experience" type="number" value="3" /></label>
+          <label>Income stability 1-5 <input name="income_stability" type="number" value="4" /></label>
         </form>
+        <button onclick="generateRisk()">Run Suitability</button>
         <div id="riskOutput" class="output"></div>
       </div>
 
       <div class="panel glass">
-        <div class="section-title">
-          <div>
-            <p class="eyebrow">Step 2</p>
-            <h2>Goal-linked Portfolio Plan</h2>
-          </div>
-          <button onclick="generatePortfolio()">Recommend</button>
-        </div>
+        <p class="eyebrow">2. Portfolio Engine</p>
+        <h2>Goal-linked recommendation</h2>
         <div class="form-grid">
-          <label>Monthly SIP ₹ <input id="sip" type="number" value="18000" /></label>
-          <label>Goal Amount ₹ <input id="goal" type="number" value="2500000" /></label>
-          <label>Horizon Years <input id="portfolioHorizon" type="number" value="8" /></label>
-          <label>Risk Bucket <input id="portfolioBucket" value="Balanced" /></label>
+          <label>Risk bucket <input id="portfolioBucket" value="Balanced" /></label>
+          <label>Monthly SIP/RD budget <input id="monthlySip" type="number" value="18000" /></label>
+          <label>Goal amount <input id="goalAmount" type="number" value="2500000" /></label>
+          <label>Horizon years <input id="portfolioHorizon" type="number" value="8" /></label>
         </div>
+        <button onclick="generatePortfolio()">Create Plan</button>
+        <button class="secondary" onclick="simulateGoal()">Run Scenario</button>
         <div id="portfolioOutput" class="output"></div>
       </div>
     </section>
 
     <section class="panel-grid">
-      <div class="panel glass wide">
-        <div class="section-title">
-          <div>
-            <p class="eyebrow">Mobile Banking Intelligence</p>
-            <h2>Transaction Signals + Fraud / Overspend Alerts</h2>
-          </div>
-          <button onclick="loadAnomalies()">Scan</button>
-        </div>
-        <div id="anomalyOutput" class="table-wrap"></div>
-      </div>
       <div class="panel glass">
-        <div class="section-title">
-          <div>
-            <p class="eyebrow">Conversational AI</p>
-            <h2>Adviser Copilot</h2>
-          </div>
-          <button onclick="askAdvisor()">Ask</button>
-        </div>
+        <p class="eyebrow">3. Fraud Intelligence</p>
+        <h2>Mobile transaction anomaly detection</h2>
+        <button onclick="loadAnomalies()">Scan Transactions</button>
+        <button class="secondary" onclick="scoreDemoTransaction()">Score Risky TXN</button>
+        <div id="anomalyOutput" class="output"></div>
+      </div>
+
+      <div class="panel glass">
+        <p class="eyebrow">4. Adviser Copilot</p>
+        <h2>Guardrailed conversational AI</h2>
         <textarea id="chatQuestion">How much emergency fund should I keep before starting SIP?</textarea>
+        <button onclick="askAdvisor()">Ask Adviser</button>
         <div id="chatOutput" class="output"></div>
       </div>
     </section>
 
-    <section class="panel glass">
-      <div class="section-title">
-        <div>
-          <p class="eyebrow">Compliance + Model Governance</p>
-          <h2>Decision Audit Trail</h2>
-        </div>
-        <button onclick="loadAudit()">Refresh</button>
+    <section class="panel-grid">
+      <div class="panel glass">
+        <p class="eyebrow">5. Governance</p>
+        <h2>Model risk + validation</h2>
+        <button onclick="loadGovernance()">Load Governance</button>
+        <div id="governanceOutput" class="output"></div>
       </div>
-      <div id="auditOutput" class="table-wrap"></div>
+
+      <div class="panel glass">
+        <p class="eyebrow">6. Audit Trail</p>
+        <h2>Hash-chain verification</h2>
+        <button onclick="loadAudit()">Open Audit</button>
+        <button class="secondary" onclick="verifyAudit()">Verify Chain</button>
+        <div id="auditOutput" class="output"></div>
+      </div>
+    </section>
+
+    <section class="panel glass">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">Bank Sandbox</p>
+          <h2>Integration readiness</h2>
+        </div>
+        <button class="small" onclick="loadSandbox()">Check Sandbox</button>
+      </div>
+      <div id="sandboxOutput" class="output"></div>
     </section>
   </main>
 
   <footer>
-    <p>Demo disclaimer: product-neutral decision support only. Final regulated investment advice requires authorized adviser review, customer consent, and bank approval.</p>
+    <p>Decision-support prototype only. No trade execution. Customer consent, authorized review, and bank governance are required for production rollout.</p>
   </footer>
 
   <script src="/static/app.js"></script>

@@ -1,0 +1,1 @@
+"""NiveshSetu AI FastAPI application."""

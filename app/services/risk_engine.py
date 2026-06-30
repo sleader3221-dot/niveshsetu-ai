@@ -1,24 +1,30 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List
 
 
 @dataclass(frozen=True)
 class RiskProfile:
     score: int
     bucket: str
+    confidence: float
     reasons: List[str]
     suitability_guardrails: List[str]
+    component_scores: Dict[str, int]
+    required_disclosures: List[str]
 
 
-def calculate_risk_profile(input_data: Dict) -> RiskProfile:
-    """Transparent suitability engine for demo robo-advisory.
+def _clip(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
 
-    It is intentionally explainable: every point addition/subtraction is captured in reasons.
-    The result should be treated as a decision-support output, not regulated investment advice.
+
+def calculate_risk_profile(input_data: Dict[str, Any]) -> RiskProfile:
+    """Explainable suitability engine for bank advisory decision support.
+
+    The engine intentionally avoids black-box behavior. Every major score movement is preserved
+    as a reason so a bank adviser, customer, or judge can inspect why the recommendation changed.
     """
-
     age = int(input_data.get("age", 30))
     income = float(input_data.get("monthly_income", 50000))
     expenses = float(input_data.get("monthly_expenses", 25000))
@@ -28,81 +34,130 @@ def calculate_risk_profile(input_data: Dict) -> RiskProfile:
     volatility_comfort = int(input_data.get("volatility_comfort", 3))
     debt_to_income = float(input_data.get("debt_to_income", 0.2))
     goal_priority = str(input_data.get("goal_priority", "balanced")).lower()
+    prior_market_experience = int(input_data.get("prior_market_experience", 2))
+    income_stability = int(input_data.get("income_stability", 4))
 
-    score = 50
-    reasons: List[str] = ["Base suitability score starts at 50."]
+    savings_rate = _clip((income - expenses) / max(income, 1), 0, 1)
+    components = {
+        "age_capacity": 50,
+        "goal_horizon": 50,
+        "cashflow_resilience": 50,
+        "liquidity_buffer": 50,
+        "behavioral_tolerance": 50,
+        "debt_burden": 50,
+        "dependency_load": 50,
+        "experience_and_stability": 50,
+    }
+    reasons: List[str] = ["Base suitability starts from a neutral bank advisory score."]
 
-    savings_rate = max(0.0, min(1.0, (income - expenses) / max(income, 1)))
     if age < 30:
-        score += 8; reasons.append("Younger age allows longer recovery time from market volatility: +8.")
+        components["age_capacity"] += 20; reasons.append("Younger age increases long-term recovery capacity: +20 age capacity.")
     elif age > 55:
-        score -= 10; reasons.append("Near-retirement age needs stronger capital preservation: -10.")
+        components["age_capacity"] -= 25; reasons.append("Near-retirement age needs capital preservation: -25 age capacity.")
+    elif age > 45:
+        components["age_capacity"] -= 10; reasons.append("Mid/late-career stage slightly reduces loss tolerance: -10 age capacity.")
 
     if horizon_years >= 10:
-        score += 15; reasons.append("Long investment horizon supports higher equity allocation: +15.")
+        components["goal_horizon"] += 30; reasons.append("Goal horizon above 10 years supports growth allocation: +30 horizon.")
     elif horizon_years < 3:
-        score -= 18; reasons.append("Short horizon requires capital protection and liquidity: -18.")
+        components["goal_horizon"] -= 35; reasons.append("Short horizon makes risky assets unsuitable for this goal: -35 horizon.")
+    elif horizon_years >= 5:
+        components["goal_horizon"] += 12; reasons.append("Medium horizon supports diversified balanced exposure: +12 horizon.")
 
     if savings_rate >= 0.35:
-        score += 10; reasons.append("Strong savings rate improves risk capacity: +10.")
+        components["cashflow_resilience"] += 25; reasons.append("Strong savings rate improves loss absorption capacity: +25 cashflow.")
     elif savings_rate < 0.10:
-        score -= 14; reasons.append("Low savings buffer reduces loss absorption capacity: -14.")
+        components["cashflow_resilience"] -= 30; reasons.append("Low savings rate weakens investment suitability: -30 cashflow.")
+    elif savings_rate < 0.20:
+        components["cashflow_resilience"] -= 12; reasons.append("Moderate-low savings rate needs cautious allocation: -12 cashflow.")
 
     if emergency_months >= 6:
-        score += 7; reasons.append("Emergency fund above six months improves resilience: +7.")
+        components["liquidity_buffer"] += 22; reasons.append("Emergency buffer above six months protects the investment plan: +22 liquidity.")
     elif emergency_months < 3:
-        score -= 12; reasons.append("Emergency fund below three months limits investment risk suitability: -12.")
+        components["liquidity_buffer"] -= 30; reasons.append("Emergency buffer below three months requires liquidity-first advice: -30 liquidity.")
 
-    score += (volatility_comfort - 3) * 6
-    reasons.append(f"Declared volatility comfort ({volatility_comfort}/5) adjusts score by {(volatility_comfort - 3) * 6:+d}.")
-
-    if dependents >= 3:
-        score -= 8; reasons.append("Multiple dependents increase cash-flow responsibility: -8.")
-    elif dependents == 0:
-        score += 3; reasons.append("No dependents provides slightly higher flexibility: +3.")
+    components["behavioral_tolerance"] += (volatility_comfort - 3) * 15
+    reasons.append(f"Declared volatility comfort {volatility_comfort}/5 changes behavioral tolerance by {(volatility_comfort - 3) * 15:+d}.")
 
     if debt_to_income > 0.45:
-        score -= 15; reasons.append("High debt-to-income ratio needs debt reduction before high-risk investing: -15.")
+        components["debt_burden"] -= 35; reasons.append("High debt-to-income requires debt reduction before high-risk investing: -35 debt.")
     elif debt_to_income < 0.15:
-        score += 5; reasons.append("Low debt burden improves risk capacity: +5.")
+        components["debt_burden"] += 15; reasons.append("Low debt burden improves advisory suitability: +15 debt.")
+
+    if dependents >= 3:
+        components["dependency_load"] -= 25; reasons.append("Multiple dependents increase liquidity and insurance needs: -25 dependency.")
+    elif dependents == 0:
+        components["dependency_load"] += 8; reasons.append("No dependents improves financial flexibility: +8 dependency.")
+
+    components["experience_and_stability"] += (prior_market_experience - 2) * 8 + (income_stability - 3) * 7
+    reasons.append("Market experience and income stability adjust suitability for product complexity.")
 
     if goal_priority == "capital_protection":
-        score -= 10; reasons.append("Goal priority is capital protection: -10.")
+        components["goal_horizon"] -= 18; reasons.append("Capital-protection goal lowers growth suitability: -18.")
     elif goal_priority == "wealth_growth":
-        score += 8; reasons.append("Goal priority is wealth growth: +8.")
+        components["goal_horizon"] += 12; reasons.append("Wealth-growth goal supports higher long-term allocation: +12.")
 
-    score = max(0, min(100, round(score)))
+    components = {k: round(_clip(v, 0, 100)) for k, v in components.items()}
+    weights = {
+        "age_capacity": 0.10,
+        "goal_horizon": 0.18,
+        "cashflow_resilience": 0.18,
+        "liquidity_buffer": 0.16,
+        "behavioral_tolerance": 0.16,
+        "debt_burden": 0.11,
+        "dependency_load": 0.06,
+        "experience_and_stability": 0.05,
+    }
+    score = round(sum(components[k] * weights[k] for k in components))
+    score = int(_clip(score, 0, 100))
 
-    if score < 35:
+    if score < 38:
         bucket = "Conservative"
         guardrails = [
-            "Avoid high-volatility products until emergency fund and debt profile improve.",
-            "Prefer liquid funds, fixed deposits, short-duration debt, and goal-linked safe instruments.",
-            "Any equity exposure should be capped and reviewed by a human adviser.",
+            "Avoid high-volatility recommendations until liquidity and debt profile improve.",
+            "Prefer emergency buffer, FD/RD, liquid instruments, and short-duration debt-style exposure.",
+            "Route any equity-heavy recommendation to mandatory human review.",
         ]
-    elif score < 70:
+    elif score < 72:
         bucket = "Balanced"
         guardrails = [
-            "Use diversified hybrid allocation with rebalancing and downside guardrails.",
-            "Keep emergency fund separate from investment corpus.",
-            "Avoid concentrated product recommendations.",
+            "Use diversified allocation with emergency fund separated from investment corpus.",
+            "Avoid concentration and enforce rebalancing drift checks.",
+            "Show scenario risk before customer consent.",
         ]
     else:
         bucket = "Growth"
         guardrails = [
-            "Diversify equity allocation across index, flexi-cap, and international exposure where allowed.",
-            "Run scenario stress tests before final recommendation.",
-            "Keep stop-loss-style alerts for sharp drawdowns and income shocks.",
+            "Limit thematic exposure through satellite caps and clear volatility warnings.",
+            "Run stress test and income-shock simulation before final consent.",
+            "Keep adviser override available for unsuitable product pushes.",
         ]
 
-    return RiskProfile(score=score, bucket=bucket, reasons=reasons, suitability_guardrails=guardrails)
+    confidence = round(0.72 + min(0.21, abs(score - 50) / 250), 2)
+    disclosures = [
+        "Decision-support only; this demo does not execute trades or guarantee returns.",
+        "Customer consent and authorized adviser review are required for regulated personalized advice.",
+        "Recommended allocation must be reviewed when income, goal horizon, debt, or risk appetite changes.",
+    ]
+    return RiskProfile(
+        score=score,
+        bucket=bucket,
+        confidence=confidence,
+        reasons=reasons,
+        suitability_guardrails=guardrails,
+        component_scores=components,
+        required_disclosures=disclosures,
+    )
 
 
-def explain_suitability(profile: RiskProfile) -> Dict:
+def explain_suitability(profile: RiskProfile) -> Dict[str, Any]:
     return {
         "risk_score": profile.score,
         "risk_bucket": profile.bucket,
-        "top_factors": profile.reasons[:8],
+        "confidence": profile.confidence,
+        "top_factors": profile.reasons[:10],
+        "component_scores": profile.component_scores,
         "guardrails": profile.suitability_guardrails,
-        "compliance_note": "Decision-support only. Final investment advice requires SEBI-registered adviser review and customer consent.",
+        "required_disclosures": profile.required_disclosures,
+        "compliance_note": "Risk profiling and suitability are visible by design; final action requires consent and authorized human review.",
     }
